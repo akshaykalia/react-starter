@@ -6,7 +6,7 @@ and [Shipyard](https://shipyard.build) out of the box.
 ## Includes
 
 - [React](https://github.com/facebook/react/) - JavaScript library for building user interfaces
-- [Material-UI](https://github.com/mui-org/material-ui) - React components for faster and simpler web development.
+- [Material-UI](https://github.com/mui-org/material-ui) - React components for faster and simpler web development..
 
 ## Dependencies
 
