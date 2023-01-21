@@ -1,0 +1,39 @@
+ARG node_image_version=16.17.0
+ARG nginx_image_version=1.19.0-alpine
+
+### Stage: builder
+#
+# This is the root stage that installs dependencies and compiles the
+# dependencies for the first time.
+FROM node:${node_image_version} AS builder
+
+# Environment variables
+#
+# These environment variables control compile-time settings. The following are
+# sane defaults for these variables; changes to the values should trigger a
+# build of a new image.
+ENV VITE_SENTRY_RELEASE=development
+ENV VITE_REST_API_URL=https://marketing-api.sm.pepstaging.com
+ENV VITE_GRAPHQL_API_URL=https://marketing-api.sm.pepstaging.com/graphql
+ENV VITE_WS_URL=wss://marketing-api.sm.pepstaging.com/socket
+
+ARG app_root=/opt/app
+
+RUN mkdir -p ${app_root}
+WORKDIR ${app_root}
+
+# Copy only the files necessary to install dependencies. This allows the Docker
+# engine to rely on layer caching if the dependencies haven't changed.
+COPY package.json package-lock.json ./
+RUN npm install
+COPY . .
+
+RUN npm run generate-graphql-types && npm run build
+
+### Stage: release-artifact
+#
+FROM nginx:${nginx_image_version} AS release-artifact
+# Replace standard server declaration for Nginx with a server declaration that
+# supports HTML5 routing
+COPY ops/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /opt/app/build /usr/share/nginx/html/
